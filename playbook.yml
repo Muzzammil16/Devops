@@ -1,0 +1,62 @@
+---
+- hosts: localhost
+  become: true
+  vars_files:
+   - vars/default.yml
+
+  tasks:
+   - name: Install Prerequisites
+     apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+     loop: [ 'aptitude' ]
+
+   - name: Install LEMP Packages
+     apt: name={{ item }} update_cache=yes state=latest
+     loop: [ 'nginx', 'mysql-server', 'python3-pymysql', 'php-fpm', 'php-mysql' ]
+
+# Nginx Configuration
+
+   - name: Sets Nginx conf file
+     template:
+       src: "files/ec2-13-127-195-177.ap-south-1.compute.amazonaws.com"
+       dest: "/etc/nginx/sites-available/{{ http_conf }}"
+
+   - name: Enables new site
+     file:
+       src: "/etc/nginx/sites-available/{{ http_conf }}"
+       dest: "/etc/nginx/sites-enabled/{{ http_conf }}"
+       state: link
+     notify: Reload Nginx
+
+   - name: Removes "default" site
+     file:
+       path: "/etc/nginx/sites-enabled/default"
+       state: absent
+     notify: Reload Nginx
+
+# UFW Configuration
+
+   - name: "UFW - Allow HTTP on port {{ http_port }}"
+     ufw:
+       rule: allow
+       port: "{{ http_port }}"
+       proto: tcp
+
+# Sets Up PHP Info Page
+
+   - name: Sets Up PHP Info Page
+     template:
+       src: "files/info.php"
+       dest: "/var/www/html/info.php"
+
+# Handlers
+
+  handlers:
+   - name: Reload Nginx
+     service:
+       name: nginx
+       state: reloaded
+
+   - name: Restart Nginx
+     service:
+       name: nginx
+       state: restarted

@@ -1,0 +1,5 @@
+---
+mysql_root_password: "0987654321"
+http_host: "ec2-13-127-195-177.ap-south-1.compute.amazonaws.com"
+http_conf: "ec2-13-127-195-177.ap-south-1.compute.amazonaws.com.conf"
+http_port: "80"
